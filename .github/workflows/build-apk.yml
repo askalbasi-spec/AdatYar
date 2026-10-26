@@ -111,14 +111,14 @@ jobs:
               public static class AlarmBridge {
                   private final Context context;
                   AlarmBridge(Context c) { context = c.getApplicationContext(); }
-                  @JavascriptInterface public void scheduleDaily(int hour, int minute, String title) {
+                  @JavascriptInterface public void scheduleDaily(int hour, int minute, String title, int alarmId) {
                       Intent i = new Intent(context, AlarmReceiver.class); i.putExtra("title", title);
-                      PendingIntent pi = PendingIntent.getBroadcast(context, 7401, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                      PendingIntent pi = PendingIntent.getBroadcast(context, alarmId, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                       AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                       Calendar c = Calendar.getInstance(); c.set(Calendar.HOUR_OF_DAY, hour); c.set(Calendar.MINUTE, minute); c.set(Calendar.SECOND, 0); if (c.getTimeInMillis() <= System.currentTimeMillis()) c.add(Calendar.DAY_OF_YEAR, 1);
                       am.setRepeating(AlarmManager.RTC_WAKEUP, c.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi);
                   }
-                  @JavascriptInterface public void cancelDaily() { Intent i = new Intent(context, AlarmReceiver.class); PendingIntent pi = PendingIntent.getBroadcast(context, 7401, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE); ((AlarmManager)context.getSystemService(Context.ALARM_SERVICE)).cancel(pi); pi.cancel(); }
+                  @JavascriptInterface public void cancelDaily(int alarmId) { Intent i = new Intent(context, AlarmReceiver.class); PendingIntent pi = PendingIntent.getBroadcast(context, alarmId, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE); ((AlarmManager)context.getSystemService(Context.ALARM_SERVICE)).cancel(pi); pi.cancel(); }
               }
               @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); web.saveState(out); }
               @Override public void onBackPressed() { if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed(); }
