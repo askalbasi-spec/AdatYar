@@ -53,9 +53,9 @@ jobs:
           }
           EOF
           cat > app/src/main/AndroidManifest.xml <<'EOF'
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />\n    <uses-permission android:name="android.permission.WAKE_LOCK" />
               <application android:theme="@style/AppTheme" android:label="عادت‌یار" android:usesCleartextTraffic="false">
-                  <activity android:name=".MainActivity" android:exported="true">
+                  <receiver android:name=".AlarmReceiver" android:exported="false" />\n              <activity android:name=".MainActivity" android:exported="true">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN" />
                           <category android:name="android.intent.category.LAUNCHER" />
@@ -82,12 +82,12 @@ jobs:
           import android.webkit.WebView;
           import android.webkit.WebSettings;
           import android.webkit.WebViewClient;
-          import android.webkit.WebChromeClient;
+          import android.webkit.WebChromeClient;\n          import android.webkit.JavascriptInterface;\n          import android.app.AlarmManager;\n          import android.app.PendingIntent;\n          import android.content.Intent;\n          import android.content.Context;\n          import java.util.Calendar;
           public class MainActivity extends Activity {
               private WebView web;
               @Override public void onCreate(Bundle state) {
                   super.onCreate(state);
-                  web = new WebView(this);
+                  web = new WebView(this);\n                  web.addJavascriptInterface(new AlarmBridge(this), "AndroidAlarm");
                   web.setWebViewClient(new WebViewClient());
                   web.setWebChromeClient(new WebChromeClient());
                   WebSettings s = web.getSettings();
@@ -98,7 +98,7 @@ jobs:
                   if (state == null) web.loadUrl("file:///android_asset/index.html");
                   else web.restoreState(state);
               }
-              @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); web.saveState(out); }
+              public static class AlarmBridge {\n                  private final Context context;\n                  AlarmBridge(Context c) { context = c.getApplicationContext(); }\n                  @JavascriptInterface public void scheduleDaily(int hour, int minute, String title) {\n                      Intent i = new Intent(context, AlarmReceiver.class); i.putExtra("title", title);\n                      PendingIntent pi = PendingIntent.getBroadcast(context, 7401, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);\n                      AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);\n                      Calendar c = Calendar.getInstance(); c.set(Calendar.HOUR_OF_DAY, hour); c.set(Calendar.MINUTE, minute); c.set(Calendar.SECOND, 0); if (c.getTimeInMillis() <= System.currentTimeMillis()) c.add(Calendar.DAY_OF_YEAR, 1);\n                      am.setRepeating(AlarmManager.RTC_WAKEUP, c.getTimeInMillis(), AlarmManager.INTERVAL_DAY, pi);\n                  }\n                  @JavascriptInterface public void cancelDaily() { Intent i = new Intent(context, AlarmReceiver.class); PendingIntent pi = PendingIntent.getBroadcast(context, 7401, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE); ((AlarmManager)context.getSystemService(Context.ALARM_SERVICE)).cancel(pi); pi.cancel(); }\n              }\n              @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); web.saveState(out); }
               @Override public void onBackPressed() { if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed(); }
           }
           EOF
