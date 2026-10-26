@@ -99,7 +99,8 @@ jobs:
           import android.media.AudioAttributes;
           import android.provider.Settings;
           import android.print.PrintManager;
-          import android.app.PendingIntent;\n          import android.os.Build;
+          import android.app.PendingIntent;
+          import android.os.Build;
           import android.content.Intent;
           import android.content.Context;
           import java.util.Calendar;
@@ -133,7 +134,8 @@ jobs:
                       PendingIntent pi = PendingIntent.getBroadcast(context, alarmId, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                       AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
                       Calendar c = Calendar.getInstance(); c.set(Calendar.HOUR_OF_DAY, hour); c.set(Calendar.MINUTE, minute); c.set(Calendar.SECOND, 0); if (c.getTimeInMillis() <= System.currentTimeMillis()) c.add(Calendar.DAY_OF_YEAR, 1);
-                      i.putExtra("hour", hour); i.putExtra("minute", minute); i.putExtra("alarmId", alarmId);\n                      if (Build.VERSION.SDK_INT >= 23) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, c.getTimeInMillis(), pi); else am.setExact(AlarmManager.RTC_WAKEUP, c.getTimeInMillis(), pi);
+                      i.putExtra("hour", hour); i.putExtra("minute", minute); i.putExtra("alarmId", alarmId);
+                      if (Build.VERSION.SDK_INT >= 23) am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, c.getTimeInMillis(), pi); else am.setExact(AlarmManager.RTC_WAKEUP, c.getTimeInMillis(), pi);
                   }
                   @JavascriptInterface public void cancelDaily(int alarmId) { Intent i = new Intent(context, AlarmReceiver.class); PendingIntent pi = PendingIntent.getBroadcast(context, alarmId, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE); ((AlarmManager)context.getSystemService(Context.ALARM_SERVICE)).cancel(pi); pi.cancel(); }
               }
@@ -160,7 +162,14 @@ jobs:
                   String title=intent.getStringExtra("title"); if(title==null||title.isEmpty()) title="زمان انجام عادت روزانه است";
                   Notification.Builder b=Build.VERSION.SDK_INT>=26?new Notification.Builder(context,channel):new Notification.Builder(context);
                   b.setSmallIcon(android.R.drawable.ic_lock_idle_alarm).setContentTitle("یادآور عادت‌یار").setContentText(title).setAutoCancel(true);
-                  nm.notify(intent.getIntExtra("alarmId", 7401),b.build());\n                  int hour=intent.getIntExtra("hour",-1), minute=intent.getIntExtra("minute",-1), id=intent.getIntExtra("alarmId",-1);\n                  if(hour>=0 && minute>=0 && id>=0) {\n                      Intent next=new Intent(context, AlarmReceiver.class); next.putExtra("title",title); next.putExtra("hour",hour); next.putExtra("minute",minute); next.putExtra("alarmId",id);\n                      android.app.PendingIntent pi=android.app.PendingIntent.getBroadcast(context,id,next,android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE);\n                      java.util.Calendar cal=java.util.Calendar.getInstance(); cal.set(java.util.Calendar.HOUR_OF_DAY,hour); cal.set(java.util.Calendar.MINUTE,minute); cal.set(java.util.Calendar.SECOND,0); cal.set(java.util.Calendar.MILLISECOND,0); if(cal.getTimeInMillis()<=System.currentTimeMillis())cal.add(java.util.Calendar.DAY_OF_YEAR,1);\n                      android.app.AlarmManager am=(android.app.AlarmManager)context.getSystemService(Context.ALARM_SERVICE); if(Build.VERSION.SDK_INT>=23)am.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP,cal.getTimeInMillis(),pi); else am.setExact(android.app.AlarmManager.RTC_WAKEUP,cal.getTimeInMillis(),pi);\n                  }
+                  nm.notify(intent.getIntExtra("alarmId", 7401),b.build());
+                  int hour=intent.getIntExtra("hour",-1), minute=intent.getIntExtra("minute",-1), id=intent.getIntExtra("alarmId",-1);
+                  if(hour>=0 && minute>=0 && id>=0) {
+                      Intent next=new Intent(context, AlarmReceiver.class); next.putExtra("title",title); next.putExtra("hour",hour); next.putExtra("minute",minute); next.putExtra("alarmId",id);
+                      android.app.PendingIntent pi=android.app.PendingIntent.getBroadcast(context,id,next,android.app.PendingIntent.FLAG_UPDATE_CURRENT | android.app.PendingIntent.FLAG_IMMUTABLE);
+                      java.util.Calendar cal=java.util.Calendar.getInstance(); cal.set(java.util.Calendar.HOUR_OF_DAY,hour); cal.set(java.util.Calendar.MINUTE,minute); cal.set(java.util.Calendar.SECOND,0); cal.set(java.util.Calendar.MILLISECOND,0); if(cal.getTimeInMillis()<=System.currentTimeMillis())cal.add(java.util.Calendar.DAY_OF_YEAR,1);
+                      android.app.AlarmManager am=(android.app.AlarmManager)context.getSystemService(Context.ALARM_SERVICE); if(Build.VERSION.SDK_INT>=23)am.setExactAndAllowWhileIdle(android.app.AlarmManager.RTC_WAKEUP,cal.getTimeInMillis(),pi); else am.setExact(android.app.AlarmManager.RTC_WAKEUP,cal.getTimeInMillis(),pi);
+                  }
               }
           }
           EOF
