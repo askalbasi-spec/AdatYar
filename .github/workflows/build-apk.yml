@@ -112,11 +112,14 @@ jobs:
               private WebView web;
               private ValueCallback<Uri[]> filePathCallback;
               private static final int FILE_CHOOSER_REQUEST = 4102;
+              private static final int BACKUP_CREATE_REQUEST = 4103;
+              private String pendingBackupJson;
               @Override public void onCreate(Bundle state) {
                   super.onCreate(state);
                   web = new WebView(this);
                   web.addJavascriptInterface(new AlarmBridge(this), "AndroidAlarm");
                   web.addJavascriptInterface(new PrintBridge(this, web), "AndroidPrint");
+                  web.addJavascriptInterface(new FilesBridge(this), "AndroidFiles");
                   web.setWebViewClient(new WebViewClient());
                   web.setWebChromeClient(new WebChromeClient() {
                       @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
@@ -154,8 +157,36 @@ jobs:
                   }
                   @JavascriptInterface public void cancelDaily(int alarmId) { Intent i = new Intent(context, AlarmReceiver.class); PendingIntent pi = PendingIntent.getBroadcast(context, alarmId, i, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE); ((AlarmManager)context.getSystemService(Context.ALARM_SERVICE)).cancel(pi); pi.cancel(); }
               }
+              public class FilesBridge {
+                  private final Activity activity;
+                  FilesBridge(Activity a) { activity = a; }
+                  @JavascriptInterface public void saveBackup(String json, String filename) {
+                      activity.runOnUiThread(() -> {
+                          pendingBackupJson = json;
+                          Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
+                          intent.addCategory(Intent.CATEGORY_OPENABLE);
+                          intent.setType("application/json");
+                          intent.putExtra(Intent.EXTRA_TITLE, filename);
+                          try { startActivityForResult(intent, BACKUP_CREATE_REQUEST); }
+                          catch (ActivityNotFoundException e) { pendingBackupJson = null; web.evaluateJavascript("alert('امکان باز کردن پنجره ذخیره فایل وجود ندارد.')", null); }
+                      });
+                  }
+              }
               @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
                   super.onActivityResult(requestCode, resultCode, data);
+                  if (requestCode == BACKUP_CREATE_REQUEST) {
+                      if (resultCode == RESULT_OK && data != null && data.getData() != null && pendingBackupJson != null) {
+                          try (java.io.OutputStream out = getContentResolver().openOutputStream(data.getData())) {
+                              if (out == null) throw new java.io.IOException("Unable to open output stream");
+                              out.write(pendingBackupJson.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                              out.flush();
+                              web.evaluateJavascript("alert('فایل پشتیبان با موفقیت ذخیره شد.')", null);
+                          } catch (Exception e) {
+                              web.evaluateJavascript("alert('ذخیره فایل پشتیبان انجام نشد؛ دوباره تلاش کنید.')", null);
+                          }
+                      }
+                      pendingBackupJson = null;
+                  }
                   if (requestCode == FILE_CHOOSER_REQUEST && filePathCallback != null) {
                       Uri[] results = null;
                       if (resultCode == RESULT_OK && data != null) {
