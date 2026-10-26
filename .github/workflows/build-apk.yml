@@ -54,8 +54,8 @@ jobs:
           EOF
           cat > app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
+          <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+          <uses-permission android:name="android.permission.WAKE_LOCK" />
               <application android:theme="@style/AppTheme" android:label="عادت‌یار" android:usesCleartextTraffic="false">
                   <receiver android:name=".AlarmReceiver" android:exported="false" />
               <activity android:name=".MainActivity" android:exported="true">
