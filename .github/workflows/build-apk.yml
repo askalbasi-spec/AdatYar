@@ -95,6 +95,9 @@ jobs:
           import android.webkit.WebChromeClient;
           import android.webkit.JavascriptInterface;
           import android.app.AlarmManager;
+          import android.media.AudioAttributes;
+          import android.provider.Settings;
+          import android.print.PrintManager;
           import android.app.PendingIntent;
           import android.content.Intent;
           import android.content.Context;
@@ -105,6 +108,7 @@ jobs:
                   super.onCreate(state);
                   web = new WebView(this);
                   web.addJavascriptInterface(new AlarmBridge(this), "AndroidAlarm");
+                  web.addJavascriptInterface(new PrintBridge(this, web), "AndroidPrint");
                   web.setWebViewClient(new WebViewClient());
                   web.setWebChromeClient(new WebChromeClient());
                   WebSettings s = web.getSettings();
@@ -114,6 +118,11 @@ jobs:
                   setContentView(web);
                   if (state == null) web.loadUrl("file:///android_asset/index.html");
                   else web.restoreState(state);
+              }
+              public static class PrintBridge {
+                  private final Activity activity; private final WebView web;
+                  PrintBridge(Activity a, WebView w) { activity=a; web=w; }
+                  @JavascriptInterface public void printReport() { activity.runOnUiThread(() -> { PrintManager pm=(PrintManager)activity.getSystemService(Context.PRINT_SERVICE); pm.print("AdatYar-Report", web.createPrintDocumentAdapter("گزارش عادت‌یار"), new android.print.PrintAttributes.Builder().setMediaSize(android.print.PrintAttributes.MediaSize.ISO_A4).setResolution(new android.print.PrintAttributes.Resolution("pdf","PDF",300,300)).setMinMargins(android.print.PrintAttributes.Margins.NO_MARGINS).build()); }); }
               }
               public static class AlarmBridge {
                   private final Context context;
@@ -144,7 +153,7 @@ jobs:
               @Override public void onReceive(Context context, Intent intent) {
                   NotificationManager nm=(NotificationManager)context.getSystemService(Context.NOTIFICATION_SERVICE);
                   String channel="adatyar-reminders";
-                  if(Build.VERSION.SDK_INT>=26) nm.createNotificationChannel(new NotificationChannel(channel,"یادآورهای عادت‌یار",NotificationManager.IMPORTANCE_HIGH));
+                  if(Build.VERSION.SDK_INT>=26) { NotificationChannel nc=new NotificationChannel(channel,"یادآورهای عادت‌یار",NotificationManager.IMPORTANCE_HIGH); nc.setSound(Settings.System.DEFAULT_NOTIFICATION_URI,new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).build()); nc.enableVibration(true); nm.createNotificationChannel(nc); }
                   String title=intent.getStringExtra("title"); if(title==null||title.isEmpty()) title="زمان انجام عادت روزانه است";
                   Notification.Builder b=Build.VERSION.SDK_INT>=26?new Notification.Builder(context,channel):new Notification.Builder(context);
                   b.setSmallIcon(android.R.drawable.ic_lock_idle_alarm).setContentTitle("یادآور عادت‌یار").setContentText(title).setAutoCancel(true);
