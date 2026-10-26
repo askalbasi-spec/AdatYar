@@ -129,7 +129,6 @@ jobs:
               }
               @Override public void onBackPressed() { if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed(); }
               @Override protected void onSaveInstanceState(Bundle out) { super.onSaveInstanceState(out); web.saveState(out); }
-              @Override public void onBackPressed() { if (web != null && web.canGoBack()) web.goBack(); else super.onBackPressed(); }
           }
           EOF
           cat > app/src/main/java/ir/adatyar/app/AlarmReceiver.java <<'EOF'
